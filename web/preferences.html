@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Preferencias{% endblock %}
+{% block content %}
+<h2>Configurar Preferencias</h2>
+<form id="prefForm">
+    <div class="mb-3">
+        <label for="ticker" class="form-label">Ticker</label>
+        <input type="text" class="form-control" id="ticker" name="ticker" required>
+    </div>
+    <div class="mb-3">
+        <label for="drop_percentage" class="form-label">Porcentaje de caída</label>
+        <input type="number" class="form-control" id="drop_percentage" name="drop_percentage" min="0" max="100" required>
+    </div>
+    <div class="mb-3">
+        <label for="days" class="form-label">Días</label>
+        <input type="number" class="form-control" id="days" name="days" min="1" max="365" required>
+    </div>
+    <button type="submit" class="btn btn-success">Guardar preferencia</button>
+</form>
+<div id="prefMsg" class="mt-3"></div>
+<hr>
+<h3>Mis preferencias</h3>
+<ul id="prefsList" class="list-group"></ul>
+<script>
+// Suponiendo que tienes el token en localStorage tras login
+const token = localStorage.getItem('access_token');
+
+function loadPreferences() {
+    fetch('/preferences', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById('prefsList');
+        list.innerHTML = '';
+        data.forEach(pref => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = `${pref.ticker} - ${pref.drop_percentage}% en ${pref.days} días`;
+            list.appendChild(li);
+        });
+    });
+}
+
+document.getElementById('prefForm').onsubmit = function(e) {
+    e.preventDefault();
+    const form = e.target;
+    fetch('/preferences/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+            ticker: form.ticker.value,
+            drop_percentage: form.drop_percentage.value,
+            days: form.days.value
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('prefMsg').textContent = data.message;
+        loadPreferences();
+    });
+};
+
+window.onload = loadPreferences;
+</script>
+{% endblock %}
+
