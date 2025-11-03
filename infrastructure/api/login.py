@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
-from infrastructure.api.auth.auth import hash_password, verify_password, create_auth_tokens
+from infrastructure.api.auth.auth import hash_password, verify_password, create_auth_tokens, refresh_access_token
 from infrastructure.repository.user_repository import UserRepository
 from infrastructure.api.dto.login_dto import LoginResponse
 
@@ -34,3 +34,11 @@ def register(user: dict):
         raise HTTPException(status_code=409, detail="El usuario o email ya existe.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+@router.post("/refresh")
+def refresh_token_endpoint(payload: dict):
+    refresh_token = payload.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="refresh_token is required")
+    tokens = refresh_access_token(refresh_token)
+    return tokens
