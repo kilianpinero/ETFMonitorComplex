@@ -1,21 +1,123 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<h2>Iniciar sesión</h2>
-<form method="post" action="/login">
-    <div class="mb-3">
-        <label for="username" class="form-label">Email</label>
-        <input type="text" class="form-control" id="username" name="username" required>
-    </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">Contraseña</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-    </div>
-    {% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-    <button type="submit" class="btn btn-primary">Entrar</button>
-    <a href="/register" class="btn btn-link">¿No tienes cuenta? Regístrate</a>
-</form>
-{% endblock %}
+<!-- Centered card wrapper similar to register page -->
+<div class="d-flex align-items-center justify-content-center" style="min-height:60vh;">
+  <div class="card shadow-sm p-4" style="width:360px; position: relative;">
+    <h2 class="h4 mb-3 text-center">Iniciar sesión</h2>
+    <div id="toastContainer" style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2000; display: flex; flex-direction: column; gap: .5rem;"></div>
 
+    <form id="loginForm">
+        <div class="mb-3">
+            <label for="username" class="form-label">Email</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <div id="loginError" class="alert alert-danger d-none"></div>
+        <div id="loginSuccess" class="alert alert-success d-none"></div>
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Entrar</button>
+        </div>
+        <div class="text-center mt-3">
+          <a href="/register" class="btn btn-link">¿No tienes cuenta? Regístrate</a>
+        </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.toast-card { min-width: 260px; max-width: 420px; background: linear-gradient(180deg, #ffffff, #fbfdff); border-left: 4px solid #0d6efd; box-shadow: 0 6px 18px rgba(0,0,0,0.08); padding: .75rem 1rem; border-radius: .5rem; transform: translateY(-10px); opacity: 0; transition: transform .25s ease, opacity .25s ease; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+.toast-card.show { transform: translateY(0); opacity: 1; }
+.toast-title { font-weight: 600; color: #0b5ed7; }
+.toast-body { margin-top: .25rem; color: #212529; }
+.toast-close { background: transparent; border: none; color: #6c757d; font-size: 1.1rem; cursor: pointer; }
+</style>
+
+<script>
+// Login form submit
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const params = new URLSearchParams();
+  params.append('username', username);
+  params.append('password', password);
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+      credentials: 'same-origin'
+    });
+    const data = await response.json();
+    if (response.ok) {
+      document.getElementById('loginSuccess').textContent = 'Login correcto. Redirigiendo...';
+      document.getElementById('loginSuccess').classList.remove('d-none');
+      document.getElementById('loginError').classList.add('d-none');
+      setTimeout(() => { window.location.href = '/preferences'; }, 900);
+    } else {
+      document.getElementById('loginError').textContent = data.detail || 'Error de autenticación';
+      document.getElementById('loginError').classList.remove('d-none');
+      document.getElementById('loginSuccess').classList.add('d-none');
+    }
+  } catch (err) {
+    document.getElementById('loginError').textContent = 'Error de red';
+    document.getElementById('loginError').classList.remove('d-none');
+    document.getElementById('loginSuccess').classList.add('d-none');
+  }
+});
+
+// Helper: mostrar toast
+function showToast(title, message, opts = {}) {
+  const container = document.getElementById('toastContainer');
+  if(!container) return;
+  const card = document.createElement('div');
+  card.className = 'toast-card';
+  // Cambia el color de fondo y borde para verde clarito
+  card.style.background = '#d1fae5'; // verde clarito
+  card.style.borderLeft = '4px solid #34d399'; // verde
+  card.style.color = '#065f46';
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'toast-title';
+  titleEl.textContent = title || 'Info';
+  titleEl.style.color = '#065f46'; // verde oscuro
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'toast-body';
+  bodyEl.textContent = message || '';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'toast-close';
+  closeBtn.innerHTML = '&times;';
+  closeBtn.addEventListener('click', () => { if(card.parentNode) card.parentNode.removeChild(card); });
+
+  const header = document.createElement('div');
+  header.style.display = 'flex'; header.style.justifyContent = 'space-between'; header.style.alignItems = 'center';
+  header.appendChild(titleEl); header.appendChild(closeBtn);
+  card.appendChild(header); card.appendChild(bodyEl);
+  container.appendChild(card);
+  requestAnimationFrame(()=> card.classList.add('show'));
+  const timeout = opts.timeout || 5000;
+  setTimeout(()=>{ try{ if(card.parentNode){ card.classList.remove('show'); setTimeout(()=> card.parentNode && card.parentNode.removeChild(card), 250);} }catch(e){} }, timeout);
+}
+
+// Show toast when `message` query param exists
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const message = params.get('message');
+  if(message){
+    try{ showToast('¡Éxito!', decodeURIComponent(message.replace(/\+/g,' '))); }catch(e){ showToast('¡Éxito!', message); }
+    // remove message from URL without reloading
+    params.delete('message');
+    const newQuery = params.toString();
+    const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+    window.history.replaceState({}, document.title, newUrl);
+  }
+})();
+</script>
+
+{% endblock %}

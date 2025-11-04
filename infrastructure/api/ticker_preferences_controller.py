@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException, Body, Request, Cookie
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from infrastructure.repository.ticker_preferences_repository import TickerPreferencesRepository
 from infrastructure.api.auth.models_pydantic import TickerPreferencesCreate, TickerPreferencesUpdate, TickerPreferencesOut
 from infrastructure.api.auth.auth import get_current_user
 from sqlalchemy.exc import IntegrityError
+import os
 
-router = APIRouter(prefix="/preferences", tags=["preferences"])
+router = APIRouter(prefix="/api/preferences", tags=["preferences"])
 ticker_repo = TickerPreferencesRepository()
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), '../../web'))
 
 @router.post("/add")
 def create_preference(pref: TickerPreferencesCreate, current_user: dict = Depends(get_current_user)):
@@ -47,5 +51,20 @@ def delete_preference(pref_id: str):
         return {"success": True, "message": "Preferencia eliminada correctamente."}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+@router.get("/")
+def get_preferences(current_user: dict = Depends(get_current_user)):
+    try:
+        preferences = ticker_repo.get_by_user_id(str(current_user["id"]))
+        return [
+            {
+                "id": str(p.id),
+                "ticker": p.ticker,
+                "drop_percentage": p.drop_percentage,
+                "days": p.days
+            } for p in preferences
+        ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")

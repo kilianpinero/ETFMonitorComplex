@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Cookie
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -49,9 +49,11 @@ def create_auth_tokens(data: dict):
         "token_type": "bearer"
     }
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         user_email: str = payload.get("sub")
         if user_email is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")

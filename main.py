@@ -4,6 +4,7 @@ from application.email_notifier import EmailNotifier
 from fastapi import FastAPI
 from infrastructure.api.ticker_preferences_controller import router as preferences_router
 from infrastructure.api.login import router as login_router
+from infrastructure.api.ticker_search_controller import router as ticker_router
 
 
 # analyzer = StockDropAnalyzer()
@@ -53,5 +54,6 @@ app = FastAPI()
 def include_routers():
     app.include_router(preferences_router)
     app.include_router(login_router)
+    app.include_router(ticker_router)
 
 include_routers()
