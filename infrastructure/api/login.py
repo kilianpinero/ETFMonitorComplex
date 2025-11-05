@@ -4,9 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.exc import IntegrityError
 from pydantic import EmailStr
-from infrastructure.api.auth.auth import hash_password, verify_password, create_auth_tokens, refresh_access_token
+from infrastructure.api.auth.auth import hash_password, verify_password, create_auth_tokens, refresh_access_token, get_current_user
 from infrastructure.repository.user_repository import UserRepository
-from infrastructure.api.dto.login_dto import LoginResponse
 import os
 
 router = APIRouter()
@@ -38,7 +37,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         key="refresh_token",
         value=tokens["refresh_token"],
         httponly=True,
-        secure=False,
+        secure=False, # En producción, esto debería ser True si se usa HTTPS
         samesite="lax",
         max_age=60*60*24*7  # 7 días por ejemplo
     )
@@ -101,5 +100,12 @@ def register_form(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 @router.get("/preferences", response_class=HTMLResponse)
-def preferences_page(request: Request):
-    return templates.TemplateResponse("preferences.html", {"request": request})
+def preferences_page(request: Request, access_token: str = Cookie(None)):
+    is_authenticated = False
+    if access_token:
+        try:
+            user = get_current_user(access_token)
+            is_authenticated = True if user else False
+        except Exception:
+            is_authenticated = False
+    return templates.TemplateResponse("preferences.html", {"request": request, "is_authenticated": is_authenticated})

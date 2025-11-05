@@ -19,9 +19,9 @@ class EmailNotifier:
             html_content=html_body
         )
         try:
-            # send_grid_client = SendGridAPIClient(self.api_key)
-            # response = send_grid_client.send(message)
-            # print(f"✅ Email enviado con estado {response.status_code}")
+            send_grid_client = SendGridAPIClient(self.api_key)
+            response = send_grid_client.send(message)
+            print(f"✅ Email enviado con estado {response.status_code}")
             with open("preview_email.html", "w", encoding="utf-8") as f:
                 f.write(html_body)
             print("Previsualización guardada en preview_email.html")

@@ -13,7 +13,7 @@ class UserRepository:
     def get_by_email(self, email: str):
         return self.session.query(User).filter(User.email == email).first()
 
-    def get_all(self):
+    def get_all_users(self):
         return self.session.query(User).all()
 
     def get_user_with_preferences(self, user_id: str):

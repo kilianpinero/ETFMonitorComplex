@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from infrastructure.api.ticker_preferences_controller import router as preferences_router
 from infrastructure.api.login import router as login_router
 from infrastructure.api.ticker_search_controller import router as ticker_router
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 # analyzer = StockDropAnalyzer()
@@ -49,6 +50,7 @@ from infrastructure.api.ticker_search_controller import router as ticker_router
 # notifier.send_email("kilianpinero@gmail.com", results)
 
 app = FastAPI()
+service = UserPreferencesAnalyzerService()
 
 # Registrar el controlador de preferencias
 def include_routers():
@@ -56,4 +58,12 @@ def include_routers():
     app.include_router(login_router)
     app.include_router(ticker_router)
 
+# arrancar scheduler
+def scheduler_starter():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(service.check_all_tickers, 'cron', hour='12,18', minute=0, timezone='Europe/Madrid')
+    scheduler.start()
+
+
 include_routers()
+scheduler_starter()
