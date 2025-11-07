@@ -40,12 +40,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 #     }
 # ]
 #
-# service = UserPreferencesAnalyzerService()
+service = UserPreferencesAnalyzerService()
 # notifier = EmailNotifier()
-# # results = service.analyze_user_tickers("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+# results = service.analyze_user_tickers("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+service.check_all_tickers()
 # for result in results:
 #     if result.get('alert', False):
-#         print(f"🚨 Alerta de caída para {result.get('ticker')}: {result.get('drop_percentage')}%")
+#         print(f"🚨 Alerta de caída para {result.get('ticke r')}: {result.get('drop_percentage')}%")
 #
 # notifier.send_email("kilianpinero@gmail.com", results)
 

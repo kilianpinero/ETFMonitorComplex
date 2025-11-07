@@ -1,8 +1,8 @@
-import os
-from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from dotenv import load_dotenv
 from application.email_template import EmailTemplate
+import os
 
 class EmailNotifier:
     def __init__(self):
