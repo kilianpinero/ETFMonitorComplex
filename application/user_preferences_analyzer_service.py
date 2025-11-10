@@ -1,7 +1,8 @@
 from infrastructure.repository.ticker_preferences_repository import TickerPreferencesRepository
 from application.stock_drop_analyzer import StockDropAnalyzer
 from infrastructure.repository.user_repository import UserRepository
-from application.email_notifier import EmailNotifier
+from application.notification.notification_service import NotificationService
+from application.notification.email_channel import EmailNotificationChannel
 import threading
 
 def prepare_email_report(results):
@@ -11,17 +12,17 @@ class UserPreferencesAnalyzerService:
     def __init__(self):
         self.ticker_pref_repo = TickerPreferencesRepository()
         self.analyzer = StockDropAnalyzer()
+        self.notification_service = NotificationService([EmailNotificationChannel()])
 
     def check_all_tickers(self):
-        email_service = EmailNotifier()
         user_repo = UserRepository()
         users = user_repo.get_all_users()
         for user in users:
             results = self.analyze_user_tickers(user.id)
             report = prepare_email_report(results)
             # using Threads to send emails concurrently
-            # threading.Thread(target=email_service.send_email, args=(user.email, report)).start()
-            threading.Thread(target=print, args=(f"Email to: {user.email}, Report: {report}",)).start()
+            threading.Thread(target=self.notification_service.notify, args=(user.email, None, report)).start()
+            # threading.Thread(target=print, args=(f"Email to: {user.email}, Report: {report}",)).start()
 
     def analyze_user_tickers(self, user_id: str):
         results = []

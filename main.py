@@ -1,6 +1,5 @@
 from application.stock_drop_analyzer import StockDropAnalyzer
 from application.user_preferences_analyzer_service import UserPreferencesAnalyzerService
-from application.email_notifier import EmailNotifier
 from fastapi import FastAPI
 from infrastructure.api.ticker_preferences_controller import router as preferences_router
 from infrastructure.api.login import router as login_router
@@ -41,8 +40,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # ]
 #
 service = UserPreferencesAnalyzerService()
-# notifier = EmailNotifier()
-# results = service.analyze_user_tickers("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 service.check_all_tickers()
 # for result in results:
 #     if result.get('alert', False):
