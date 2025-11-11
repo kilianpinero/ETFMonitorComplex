@@ -39,8 +39,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 #     }
 # ]
 #
+
 service = UserPreferencesAnalyzerService()
 service.check_all_tickers()
+
 # for result in results:
 #     if result.get('alert', False):
 #         print(f"🚨 Alerta de caída para {result.get('ticke r')}: {result.get('drop_percentage')}%")

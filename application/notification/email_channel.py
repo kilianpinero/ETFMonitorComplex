@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from application.notification.email_template import EmailTemplate
-
 from .notification_channel import NotificationChannel
 
 class EmailNotificationChannel(NotificationChannel):

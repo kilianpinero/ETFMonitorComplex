@@ -20,9 +20,10 @@ class UserPreferencesAnalyzerService:
         for user in users:
             results = self.analyze_user_tickers(user.id)
             report = prepare_email_report(results)
-            # using Threads to send emails concurrently
-            threading.Thread(target=self.notification_service.notify, args=(user.email, None, report)).start()
-            # threading.Thread(target=print, args=(f"Email to: {user.email}, Report: {report}",)).start()
+            # only start thread if report is not empty
+            if report:
+                threading.Thread(target=self.notification_service.notify, args=(user.email, None, report)).start()
+                 # threading.Thread(target=print, args=(f"Email to: {user.email}, Report: {report}",)).start()
 
     def analyze_user_tickers(self, user_id: str):
         results = []

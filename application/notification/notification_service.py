@@ -6,3 +6,4 @@ class NotificationService:
         for channel in self.channels:
             channel.send(recipient, subject, message)
 
+#se pueden añadir otras notificaciones como PUSH, sms, etc.
