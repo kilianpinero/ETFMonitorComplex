@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from infrastructure.api.ticker_preferences_controller import router as preferences_router
 from infrastructure.api.login import router as login_router
 from infrastructure.api.ticker_search_controller import router as ticker_router
+from infrastructure.api.stripe_controller import router as stripe_router
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
@@ -40,8 +41,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # ]
 #
 
-# service = UserPreferencesAnalyzerService()
-# service.check_all_tickers()
+service = UserPreferencesAnalyzerService()
+service.check_all_tickers()
 
 # for result in results:
 #     if result.get('alert', False):
@@ -57,6 +58,7 @@ def include_routers():
     app.include_router(preferences_router)
     app.include_router(login_router)
     app.include_router(ticker_router)
+    app.include_router(stripe_router)
 
 # arrancar scheduler
 def scheduler_starter():
