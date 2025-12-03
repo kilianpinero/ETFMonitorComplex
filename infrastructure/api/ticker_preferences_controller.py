@@ -14,11 +14,22 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), '.
 @router.post("/add")
 def create_preference(pref: TickerPreferencesCreate, current_user: dict = Depends(get_current_user)):
     try:
+        # Comprobar el número de preferencias existentes para el usuario
+        user_id = str(current_user["id"])
+        is_premium = current_user.get("is_premium", False)
+        preferences = ticker_repo.get_by_user_id(user_id)
+        num_preferences = len(preferences)
+        max_preferences = 50 if is_premium else 5
+        if num_preferences >= max_preferences:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Límite de preferencias alcanzado: {'Premium (50)' if is_premium else 'Freemium (5)'}"
+            )
         created = ticker_repo.create(
             ticker=pref.ticker,
             drop_percentage=pref.drop_percentage,
             days=pref.days,
-            user_id=str(current_user["id"])
+            user_id=user_id
         )
         if created:
             return {"success": True, "message": "Preferencia guardada correctamente."}

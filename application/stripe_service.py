@@ -51,6 +51,7 @@ class StripeService:
                 success_url=success_url,
                 cancel_url=cancel_url
             )
+            print(session)
             return session.url
         except stripe.error.StripeError as e:
             logging.error(f"Stripe error (create_checkout_session_from_product): {e}")

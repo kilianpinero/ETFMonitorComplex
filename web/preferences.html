@@ -30,6 +30,13 @@
     </div>
 </div>
 <div id="prefMsg" class="mt-3 text-center"></div>
+<div id="errorModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); justify-content:center; align-items:center;">
+  <div style="background:#fff; border-radius:12px; padding:32px 24px; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.18); text-align:center;">
+    <h4 style="margin-bottom:16px; color:#d32f2f;">Error</h4>
+    <div id="modalErrorMsg" style="margin-bottom:24px; color:#333;"></div>
+    <button onclick="closeErrorModal()" class="btn btn-danger">Cerrar</button>
+  </div>
+</div>
 <script>
     let editingRow = null;
     let preferences = [];
@@ -111,12 +118,21 @@
       renderTable();
     }
 
+    function showErrorModal(message) {
+      document.getElementById('modalErrorMsg').textContent = message;
+      document.getElementById('errorModal').style.display = 'flex';
+    }
+
+    function closeErrorModal() {
+      document.getElementById('errorModal').style.display = 'none';
+    }
+
     function saveEdit(idx) {
       const ticker = document.getElementById('ticker-input').value.trim();
       const drop = document.getElementById(`edit-drop-${idx}`).value;
       const days = document.getElementById(`edit-days-${idx}`).value;
       if (!ticker || drop === '' || days === '') {
-        document.getElementById('prefMsg').textContent = 'Todos los campos son obligatorios.';
+        showErrorModal('Todos los campos son obligatorios.');
         return;
       }
       const isNew = !preferences[idx].id;
@@ -134,11 +150,11 @@
           document.getElementById('prefMsg').textContent = '';
           loadPreferences();
         } else {
-          document.getElementById('prefMsg').textContent = data.message || 'Error al guardar preferencia.';
+          showErrorModal(data.message || data.detail || 'Error al guardar preferencia.');
         }
       })
       .catch(() => {
-        document.getElementById('prefMsg').textContent = 'Error de red o de servidor.';
+        showErrorModal('Error de red o de servidor.');
       });
     }
 
