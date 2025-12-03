@@ -8,16 +8,32 @@
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/login">ETF Monitor</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="/register">Registro</a></li>
-        <li class="nav-item"><a class="nav-link" href="/preferences">Preferencias</a></li>
-      </ul>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/login">ETF Monitor</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {% if is_authenticated %}
+                <li class="nav-item">
+                    <form id="logoutForm" action="/api/logout" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm ms-2">Log Out</button>
+                    </form>
+                </li>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                      var logoutForm = document.getElementById('logoutForm');
+                      if (logoutForm) {
+                        logoutForm.addEventListener('submit', function(e) {
+                          e.preventDefault();
+                          fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
+                            .then(() => { window.location.href = '/login'; });
+                        });
+                      }
+                    });
+                </script>
+                {% endif %}
+            </ul>
+        </div>
     </div>
-  </div>
 </nav>
 <div class="container">
     {% block content %}{% endblock %}

@@ -1,70 +1,267 @@
 {% extends "base.html" %}
 {% block title %}Preferencias{% endblock %}
 {% block content %}
-<h2>Configurar Preferencias</h2>
-<form id="prefForm">
-    <div class="mb-3">
-        <label for="ticker" class="form-label">Ticker</label>
-        <input type="text" class="form-control" id="ticker" name="ticker" required>
+<h2 class="mb-4 text-center">Configurar Preferencias</h2>
+<div class="d-flex justify-content-center">
+    <div class="table-responsive" style="max-width: 920px;">
+        <table id="prefsTable" class="table table-sm table-hover align-middle shadow-sm rounded"
+               style="background: #fff; font-size: 0.95rem;">
+            <thead class="table-dark">
+            <tr>
+                <th style="width: 500px; text-align: center;">Ticker</th>
+                <th style="width: 120px; text-align: center;">Porcentaje</th>
+                <th style="width: 80px; text-align: center;">Días</th>
+                <th style="width: 110px; text-align: center;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="prefsTableBody">
+            <!-- Las filas se generan por JS -->
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="4" class="text-end">
+                    <button id="addPrefBtn" class="btn btn-outline-success btn-sm" title="Añadir preferencia">
+                        <span style="font-size: 1.3rem; line-height: 1;">&#43;</span>
+                    </button>
+                </td>
+            </tr>
+            </tfoot>
+        </table>
     </div>
-    <div class="mb-3">
-        <label for="drop_percentage" class="form-label">Porcentaje de caída</label>
-        <input type="number" class="form-control" id="drop_percentage" name="drop_percentage" min="0" max="100" required>
-    </div>
-    <div class="mb-3">
-        <label for="days" class="form-label">Días</label>
-        <input type="number" class="form-control" id="days" name="days" min="1" max="365" required>
-    </div>
-    <button type="submit" class="btn btn-success">Guardar preferencia</button>
-</form>
-<div id="prefMsg" class="mt-3"></div>
-<hr>
-<h3>Mis preferencias</h3>
-<ul id="prefsList" class="list-group"></ul>
+</div>
+<div id="prefMsg" class="mt-3 text-center"></div>
+<div id="errorModal" class="modal" tabindex="-1" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); justify-content:center; align-items:center;">
+  <div style="background:#fff; border-radius:12px; padding:32px 24px; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.18); text-align:center;">
+    <h4 style="margin-bottom:16px; color:#d32f2f;">Error</h4>
+    <div id="modalErrorMsg" style="margin-bottom:24px; color:#333;"></div>
+    <button onclick="closeErrorModal()" class="btn btn-danger">Cerrar</button>
+  </div>
+</div>
 <script>
-// Suponiendo que tienes el token en localStorage tras login
-const token = localStorage.getItem('access_token');
+    let editingRow = null;
+    let preferences = [];
 
-function loadPreferences() {
-    fetch('/preferences', {
-        headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(r => r.json())
-    .then(data => {
-        const list = document.getElementById('prefsList');
-        list.innerHTML = '';
-        data.forEach(pref => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = `${pref.ticker} - ${pref.drop_percentage}% en ${pref.days} días`;
-            list.appendChild(li);
+    function renderTable() {
+      const tbody = document.getElementById('prefsTableBody');
+      tbody.innerHTML = '';
+      if (!preferences.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No tienes preferencias guardadas.</td></tr>`;
+      } else {
+        preferences.forEach((pref, idx) => {
+          if (editingRow === idx) {
+            tbody.innerHTML += `
+              <tr>
+                <td class="px-2 py-1" style="position: relative; text-align: center;">
+                  <input
+                    id="ticker-input"
+                    name="ticker"
+                    type="text"
+                    autocomplete="off"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Buscar ticker..."
+                    value="${pref.ticker || ''}"
+                    oninput="searchTicker(this)"
+                    onfocus="showDropdown(this)"
+                    onblur="setTimeout(() => hideDropdown(), 200)"
+                    style="z-index: 2; position: relative; text-align: center;"
+                  />
+                </td>
+                <td style="text-align: center;"><input type="number" class="form-control form-control-sm" value="${pref.drop_percentage || ''}" min="0" max="100" id="edit-drop-${idx}" style="width: 90px; text-align: center;" required></td>
+                <td style="text-align: center;"><input type="number" class="form-control form-control-sm" value="${pref.days || ''}" min="1" max="365" id="edit-days-${idx}" style="width: 60px; text-align: center;" required></td>
+                <td class="text-center">
+                  <button class="btn btn-success btn-sm me-1" onclick="saveEdit(${idx})" title="Guardar"><i class="bi bi-check-lg"></i></button>
+                  <button class="btn btn-secondary btn-sm" onclick="cancelEdit()" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                </td>
+              </tr>
+            `;
+          } else {
+            tbody.innerHTML += `
+              <tr>
+                <td style="text-align: center;">${pref.ticker}</td>
+                <td style="text-align: center;">${pref.drop_percentage}%</td>
+                <td style="text-align: center;">${pref.days}</td>
+                <td class="text-center">
+                  <button class="btn btn-outline-primary btn-sm me-1" onclick="editPref(${idx})" title="Editar"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-outline-danger btn-sm" onclick="deletePref(${idx})" title="Borrar"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+            `;
+          }
         });
-    });
-}
+      }
+    }
 
-document.getElementById('prefForm').onsubmit = function(e) {
-    e.preventDefault();
-    const form = e.target;
-    fetch('/preferences/add', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({
-            ticker: form.ticker.value,
-            drop_percentage: form.drop_percentage.value,
-            days: form.days.value
+    function loadPreferences() {
+      fetch('/api/preferences', { credentials: 'same-origin' })
+        .then(r => {
+          if (r.status === 401 || r.status === 403) {
+            window.location.href = '/login';
+            return [];
+          }
+          if (!r.ok) {
+            document.getElementById('prefMsg').textContent = 'Error al cargar preferencias';
+            return [];
+          }
+          return r.json();
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById('prefMsg').textContent = data.message;
-        loadPreferences();
+        .then(data => {
+          preferences = Array.isArray(data) ? data : [];
+          editingRow = null;
+          renderTable();
+        });
+    }
+
+    function addPrefRow() {
+      if (editingRow !== null) return;
+      preferences.push({ ticker: '', drop_percentage: '', days: '' });
+      editingRow = preferences.length - 1;
+      renderTable();
+    }
+
+    function showErrorModal(message) {
+      document.getElementById('modalErrorMsg').textContent = message;
+      document.getElementById('errorModal').style.display = 'flex';
+    }
+
+    function closeErrorModal() {
+      document.getElementById('errorModal').style.display = 'none';
+    }
+
+    function saveEdit(idx) {
+      const ticker = document.getElementById('ticker-input').value.trim();
+      const drop = document.getElementById(`edit-drop-${idx}`).value;
+      const days = document.getElementById(`edit-days-${idx}`).value;
+      if (!ticker || drop === '' || days === '') {
+        showErrorModal('Todos los campos son obligatorios.');
+        return;
+      }
+      const isNew = !preferences[idx].id;
+      const url = isNew ? '/api/preferences/add' : `/api/preferences/${preferences[idx].id}`;
+      const method = isNew ? 'POST' : 'PUT';
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ ticker, drop_percentage: drop, days })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('prefMsg').textContent = '';
+          loadPreferences();
+        } else {
+          showErrorModal(data.message || data.detail || 'Error al guardar preferencia.');
+        }
+      })
+      .catch(() => {
+        showErrorModal('Error de red o de servidor.');
+      });
+    }
+
+    function editPref(idx) {
+      editingRow = idx;
+      renderTable();
+    }
+
+    function cancelEdit() {
+      loadPreferences();
+    }
+
+    function deletePref(idx) {
+      if (!preferences[idx].id) {
+        preferences.splice(idx, 1);
+        renderTable();
+        return;
+      }
+      fetch(`/api/preferences/${preferences[idx].id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPreferences();
+        } else {
+          document.getElementById('prefMsg').textContent = data.message || 'Error al borrar preferencia.';
+        }
+      })
+      .catch(() => {
+        document.getElementById('prefMsg').textContent = 'Error de red o de servidor.';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('addPrefBtn').addEventListener('click', addPrefRow);
+      loadPreferences();
     });
-};
 
-window.onload = loadPreferences;
+    // Dropdown global para ticker
+    let tickerDropdown = null;
+    function showDropdown(input) {
+      if (!tickerDropdown) {
+        tickerDropdown = document.createElement('ul');
+        tickerDropdown.id = 'ticker-dropdown';
+        tickerDropdown.className = 'dropdown-ticker bg-white border border-gray-200 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-auto';
+        tickerDropdown.style.position = 'absolute';
+        tickerDropdown.style.zIndex = 9999;
+        document.body.appendChild(tickerDropdown);
+      }
+      positionDropdown(input);
+      tickerDropdown.classList.remove('hidden');
+    }
+    function positionDropdown(input) {
+      const rect = input.getBoundingClientRect();
+      tickerDropdown.style.left = rect.left + window.scrollX + 'px';
+      tickerDropdown.style.top = rect.bottom + window.scrollY + 'px';
+      tickerDropdown.style.width = rect.width + 'px';
+    }
+    function searchTicker(input) {
+      const query = input.value;
+      if (query.length < 2) {
+        if (tickerDropdown) tickerDropdown.classList.add('hidden');
+        return;
+      }
+      showDropdown(input);
+      fetch('/api/ticker/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({query})
+      })
+      .then(res => res.json())
+      .then(data => {
+        tickerDropdown.innerHTML = '';
+        let tickers = Array.isArray(data) ? data : data.tickers;
+        if (tickers && tickers.length > 0) {
+          tickers.forEach(ticker => {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2 cursor-pointer hover:bg-blue-100 transition';
+            li.textContent = `${ticker.symbol} - ${ticker.name}`;
+            li.onclick = () => {
+              input.value = ticker.symbol;
+              tickerDropdown.innerHTML = '';
+              tickerDropdown.classList.add('hidden');
+            };
+            tickerDropdown.appendChild(li);
+          });
+          tickerDropdown.classList.remove('hidden');
+          positionDropdown(input);
+        } else {
+          tickerDropdown.classList.add('hidden');
+        }
+      });
+    }
+    function hideDropdown() {
+      if (tickerDropdown) tickerDropdown.classList.add('hidden');
+    }
 </script>
+<style>
+  .dropdown-ticker {
+    min-width: 180px;
+    max-width: 300px;
+    max-height: 240px;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 {% endblock %}
-

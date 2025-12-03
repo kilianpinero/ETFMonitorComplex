@@ -1,25 +1,80 @@
 {% extends "base.html" %}
-{% block title %}Registro{% endblock %}
+{% block title %}Register{% endblock %}
 {% block content %}
-<h2>Registro</h2>
-<form method="post" action="/register">
-    <div class="mb-3">
+<div class="d-flex align-items-center justify-content-center" style="min-height:60vh;">
+  <div class="card shadow-sm p-4" style="width:360px; position: relative;">
+    <h2 class="h4 mb-3 text-center">Registro</h2>
+    <form id="registerForm">
+      <div class="mb-3">
         <label for="username" class="form-label">Usuario</label>
-        <input type="text" class="form-control" id="username" name="username" required>
-    </div>
-    <div class="mb-3">
+        <input type="text" id="username" name="username" class="form-control" required>
+      </div>
+      <div class="mb-3">
         <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" name="email" required>
-    </div>
-    <div class="mb-3">
+        <input type="email" id="email" name="email" class="form-control" required>
+      </div>
+      <div class="mb-3">
         <label for="password" class="form-label">Contraseña</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-    </div>
-    {% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-    <button type="submit" class="btn btn-primary">Registrarse</button>
-    <a href="/login" class="btn btn-link">¿Ya tienes cuenta? Inicia sesión</a>
-</form>
+        <input type="password" id="password" name="password" class="form-control" required>
+      </div>
+      <div id="registerError" class="alert alert-danger d-none"></div>
+      <div id="registerSuccess" class="alert alert-success d-none"></div>
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">Registrarse</button>
+      </div>
+      <div class="text-center mt-3">
+        <a href="/login" class="btn btn-link">¿Ya tienes cuenta? Log in</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  document.getElementById("registerForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+      params.append(key, value);
+    }
+    let response;
+    try {
+      response = await fetch("/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        credentials: "same-origin",
+        body: params.toString(),
+      });
+    } catch (err) {
+      const errorDiv = document.getElementById("registerError");
+      errorDiv.textContent = "Error de red. Inténtalo de nuevo.";
+      errorDiv.classList.remove("d-none");
+      return;
+    }
+    let result;
+    try {
+      result = await response.json();
+    } catch (err) {
+      const errorDiv = document.getElementById("registerError");
+      errorDiv.textContent = "Respuesta inválida del servidor.";
+      errorDiv.classList.remove("d-none");
+      return;
+    }
+    if (response.ok && result.success) {
+      window.location.href = "/login?message=Registration successful. Please log in.";
+    } else {
+      const errorDiv = document.getElementById("registerError");
+      let msg = result.message || "";
+      if (!msg && result.detail) {
+        if (Array.isArray(result.detail))
+          msg = result.detail.map((d) => d.msg || d).join("; ");
+        else msg = result.detail;
+      }
+      errorDiv.textContent = msg || "Registration failed. Please try again.";
+      errorDiv.classList.remove("d-none");
+    }
+  });
+</script>
 {% endblock %}
-

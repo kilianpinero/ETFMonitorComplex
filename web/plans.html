@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planes de Suscripción</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+        }
+        .plan {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .plan:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        .plan-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #2d3a4a;
+        }
+        .price {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #4e8cff;
+            margin-bottom: 8px;
+        }
+        .trial {
+            font-size: 1.1rem;
+            color: #4e8cff;
+            margin-bottom: 16px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+        ul li {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            padding-left: 24px;
+            position: relative;
+        }
+        ul li:before {
+            content: '✔';
+            position: absolute;
+            left: 0;
+            color: #4e8cff;
+            font-weight: bold;
+        }
+        .btn {
+            background: linear-gradient(90deg, #4e8cff 0%, #6a82fb 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background: linear-gradient(90deg, #6a82fb 0%, #4e8cff 100%);
+        }
+        @media (max-width: 700px) {
+            .container {
+                flex-direction: column;
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center; margin-top:40px; color:#2d3a4a;">Elige tu plan</h1>
+    <div class="container">
+        <div class="plan">
+            <div class="plan-title">Freemium</div>
+            <div class="trial">Prueba gratuita 30 días</div>
+            <ul>
+                <li>Acceso básico a la plataforma</li>
+                <li>Alertas limitadas de movimientos de ETFs</li>
+                <li>Visualización de precios en tiempo real</li>
+                <li>Gestión de preferencias de ETFs</li>
+            </ul>
+            <a class="btn" href="/register">Comenzar gratis</a>
+        </div>
+        <div class="plan">
+            <div class="plan-title">Premium</div>
+            <div class="price">4€<span style="font-size:1rem;font-weight:400;">/mes</span></div>
+            <ul>
+                <li>Todo lo incluido en Freemium</li>
+                <li>Alertas ilimitadas y personalizadas</li>
+                <li>Notificaciones por email y SMS</li>
+                <li>Acceso a análisis avanzados</li>
+                <li>Soporte prioritario</li>
+            </ul>
+            <a class="btn" href="/subscribe">Suscribirse</a>
+        </div>
+    </div>
+</body>
+</html>

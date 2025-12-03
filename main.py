@@ -1,9 +1,11 @@
 from application.stock_drop_analyzer import StockDropAnalyzer
 from application.user_preferences_analyzer_service import UserPreferencesAnalyzerService
-from application.email_notifier import EmailNotifier
 from fastapi import FastAPI
 from infrastructure.api.ticker_preferences_controller import router as preferences_router
 from infrastructure.api.login import router as login_router
+from infrastructure.api.ticker_search_controller import router as ticker_router
+from infrastructure.api.stripe_controller import router as stripe_router
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 # analyzer = StockDropAnalyzer()
@@ -38,20 +40,32 @@ from infrastructure.api.login import router as login_router
 #     }
 # ]
 #
+
 # service = UserPreferencesAnalyzerService()
-# notifier = EmailNotifier()
-# # results = service.analyze_user_tickers("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+# service.check_all_tickers()
+
 # for result in results:
 #     if result.get('alert', False):
-#         print(f"🚨 Alerta de caída para {result.get('ticker')}: {result.get('drop_percentage')}%")
+#         print(f"🚨 Alerta de caída para {result.get('ticke r')}: {result.get('drop_percentage')}%")
 #
 # notifier.send_email("kilianpinero@gmail.com", results)
 
 app = FastAPI()
+service = UserPreferencesAnalyzerService()
 
 # Registrar el controlador de preferencias
 def include_routers():
     app.include_router(preferences_router)
     app.include_router(login_router)
+    app.include_router(ticker_router)
+    app.include_router(stripe_router)
+
+# arrancar scheduler
+def scheduler_starter():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(service.check_all_tickers, 'cron', hour='12,18', minute=0, timezone='Europe/Madrid')
+    scheduler.start()
+
 
 include_routers()
+scheduler_starter()

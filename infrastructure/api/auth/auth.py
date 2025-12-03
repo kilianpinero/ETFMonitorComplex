@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Cookie
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -49,9 +49,11 @@ def create_auth_tokens(data: dict):
         "token_type": "bearer"
     }
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         user_email: str = payload.get("sub")
         if user_email is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
@@ -61,3 +63,17 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         return {"id": user.id, "email": user.email}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def refresh_access_token(refresh_token: str):
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("scope") != "refresh_token":
+            raise HTTPException(status_code=401, detail="Invalid scope for token")
+        user_email = payload.get("sub")
+        user = users.get_by_email(user_email)
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        user_data = {"sub": user.email, "id": str(user.id), "username": user.username}
+        return create_auth_tokens(user_data)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")

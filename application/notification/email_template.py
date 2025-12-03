@@ -1,4 +1,19 @@
-
+class EmailTemplate:
+    @staticmethod
+    def build(report_rows: list[dict | dict[str, str]]) -> str:
+        rows_html = ''
+        for row in report_rows:
+            style = " style='background-color:#ffeeee;'" if row.get('alert') else ''
+            rows_html += (
+                f"<tr{style}>"
+                f"<td>{row.get('ticker', '')}</td>"
+                f"<td>{row.get('drop_percentage', '')}</td>"
+                f"<td>{row.get('highest_price', '')}</td>"
+                f"<td>{row.get('current_price', '')}</td>"
+                f"<td>{'ALERTA' if row.get('alert') else 'Sin alerta'}</td>"
+                f"</tr>"
+            )
+        return f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -55,8 +70,8 @@
                           </th>
                         </tr>
         
-                        <!-- Dynamic Rows - Replace <tr style='background-color:#ffeeee;'><td>LFMD</td><td>-71.09</td><td>12.35</td><td>3.57</td><td>ALERTA</td></tr><tr style='background-color:#ffeeee;'><td>GOOD</td><td>-18.51</td><td>13.45</td><td>10.96</td><td>ALERTA</td></tr><tr style='background-color:#ffeeee;'><td>TLS</td><td>-26.93</td><td>7.76</td><td>5.67</td><td>ALERTA</td></tr> with your data -->
-                        <tr style='background-color:#ffeeee;'><td>LFMD</td><td>-71.09</td><td>12.35</td><td>3.57</td><td>ALERTA</td></tr><tr style='background-color:#ffeeee;'><td>GOOD</td><td>-18.51</td><td>13.45</td><td>10.96</td><td>ALERTA</td></tr><tr style='background-color:#ffeeee;'><td>TLS</td><td>-26.93</td><td>7.76</td><td>5.67</td><td>ALERTA</td></tr>
+                        <!-- Dynamic Rows - Replace {rows_html} with your data -->
+                        {rows_html}
         
                       </table>
         
@@ -86,4 +101,4 @@
           </table>
         </body>
         </html>
-         
+         """
